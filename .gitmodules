@@ -1,0 +1,3 @@
+[submodule "nerf_pl"]
+	path = nerf_pl
+	url = https://github.com/kwea123/nerf_pl.git

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CS 184 Final Project Milestone</title>
+</head>
+<body>
+<h1 align="middle">Current Progress</h1>
+    <p>
+        So far, we’ve managed to get the NeRF and svox libraries working, allowing us to render
+        images from novel viewpoints using an N3 tree. While the default NeRF library is not very fast,
+        taking 11 seconds on average for a render, using the svox N3 tree implementation allows us to
+        do these renders much more quickly. In fact, with svox, our renders take approximately 0 seconds
+        (as timed by Python).
+    </p>
+    <p>
+        We also have progressed on the pose optimization loop, which includes calculating the forward
+        on a transformation input and backpropagating on the loss between this calculated image and the
+        target one. We would adjust the values of the Euler angles and translation parameters by the
+        gradient of this loss function with respect to the parameters.
+    </p>
+
+    <p>
+        In order to calculate the forward pass on the transformation input, we needed to calculate the
+        image that should appear from this pose. For that, we couldn’t raycast to every single part of
+        the image, since that would be computationally expensive to do for every single pass. Instead,
+        had to choose specific pixels to sample, calculate the rays from the camera to those pixels on
+        the image plane, and generate an image from that. We would need to choose a sampling scheme
+        which best represents the image as a whole while not having to sample every single pixel of the
+        image; this would ensure that our loss between this and the target image is as accurate as
+        possible. A couple of sampling schemes were considered, such as the ones shown below:
+    </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="images/canny_sampling.png" align="middle" width="400px" />
+            <figcaption align="middle">Canny sampling</figcaption>
+          </td>
+          <td>
+            <img src="images/random_sampling.png" align="middle" width="400px" />
+            <figcaption align="middle">Random sampling</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+<h1 align="middle">Work to be Done</h1>
+    <p>
+        However, there still needs to be more testing to determine the most efficient/effective pixel
+        sampling, loss function, and parameterization of poses to use. For example, we started off
+        trying to optimize the 4x4 transformation matrix, but we realized that this representation
+        of a transformation was too general. This is because transformation matrices need to be
+        orthogonal, but the optimization loop doesn't take this factor into account; each element of the
+        matrix is tuned on its own. Thus, we needed a representation of transformations where each
+        parameter could truly be any value within a certain range, so we decided on using Euler angles
+        and XYZ translations.
+    </p>
+
+    <div align="middle">
+      <table style="width=100%">
+        <tr>
+          <td>
+            <img src="images/close_initial_start.gif" align="middle" width="400px" />
+            <figcaption align="middle">Close initial start state</figcaption>
+          </td>
+          <td>
+            <img src="images/smooth_no_lr_scaling.gif" align="middle" width="400px" />
+            <figcaption align="middle">lr scaling disabled</figcaption>
+          </td>
+          <td>
+            <img src="images/sporatic_no_lr_scaling.gif" align="middle" width="400px" />
+            <figcaption align="middle">lr scaling disabled</figcaption>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+
+    <p>
+        Our optimization loop learns the true position and rotation of the target image. Each frame is
+        an iteration that includes the forward and backward passes of our optimization loop. Note that
+        the algorithm spends unnecessary time shearing the image during the process of fitting the
+        target image. This is one thing we aim to fix in the coming weeks for the final product.
+    </p>
+
+    <p>
+        So far, we’re a little behind schedule, but we still plan to get our pixel sampling scheme and
+        pose optimization loop optimized before the final deadline.
+    </p>
+
+    <p>
+        Suggestions for different parameterizations in the future:
+        <ul>
+            <li>9 dimensional rotation + translation</li>
+            <li>4 x 4 transformation matrix</li>
+            <li>Euler angles + translation</li>
+            <li>Six dimensional twist vector</li>
+        </ul>
+    </p>
+    <p>
+        Suggestions for different loss functions:
+        <ul>
+            <li>L1 norm</li>
+            <li>L2 norm</li>
+            <li>Cosine Distance</li>
+        </ul>
+    </p>
+
+</body>
+</html>

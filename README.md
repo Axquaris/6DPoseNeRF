@@ -1,5 +1,5 @@
 # 6DPoseNeRF
-[Initial Proposal](https://axquaris.github.io/6DPoseNeRF/). 
+[Initial Proposal](https://axquaris.github.io/6DPoseNeRF/)<br>
 [Milestone Report](https://axquaris.github.io/6DPoseNeRF/milestone)
 ### Notes:
 Timeline:

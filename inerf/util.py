@@ -79,7 +79,7 @@ def sampling_dist(target_image):
     return torch.as_tensor(edge_pixels, dtype=torch.long)
 
 def sample_pixels_edge_bias(n_pixels, target_image, image_res=(800, 800)):
-    pixel_options = sampling_dist(target_image)
+    pixel_options = sampling_dist(target_image.cpu())
     rand_idxs = torch.randperm(pixel_options.shape[0])[:n_pixels]
     return pixel_options[rand_idxs]
 

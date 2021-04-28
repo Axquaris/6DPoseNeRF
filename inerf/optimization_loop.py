@@ -8,10 +8,9 @@ import matplotlib.pyplot as plt
 
 from nerf_pl.datasets.llff import *
 
-from util import sample_pixels, sample_rays
+from util import sample_pixels, sample_rays, sample_pixels_edge_bias
 from render_utils import NeRF_Renderer, SVOX_Renderer
 
-# <(-.0)< <(0.-)> >(0.0)>
 
 class iNeRF(torch.nn.Module):
     def __init__(self, device="cuda"):
@@ -35,14 +34,14 @@ class iNeRF(torch.nn.Module):
         self.vis = [[], []]
 
 
-    def forward(self, c2w=None, num_pixel_samples=800):
+    def forward(self, c2w=None, num_pixel_samples=800, target_image=None):
         """
         In the forward function we accept a Tensor of input data and we must return
         a Tensor of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Tensors.
         """
         c2w = self.c2w if c2w is None else c2w.to(self.device)
-        pixel_idxs = sample_pixels(num_pixel_samples, self.image_res).to(self.device)
+        pixel_idxs = sample_pixels_edge_bias(num_pixel_samples, target_image, self.image_res).to(self.device)
         rays = sample_rays(pixel_idxs, c2w, self.NeRF_renderer.dataset)
         return self.NeRF_renderer.render_rays(rays)[0], pixel_idxs
 
@@ -54,17 +53,39 @@ class iNeRF(torch.nn.Module):
     @property
     def c2w(self):
         c2w = torch.zeros((4, 4)).to(self.device)
-        c2w[:3, :3] = self.camera_rot #torch.eig(self.camera_rot, eigenvectors=True)[1]
+        c2w[:3, :3] = self.camera_rot
         c2w[:3, -1] = self.camera_pos
         c2w[-1, -1] = 1
         return c2w
 
+    """
+    TODO: Visualization - Want a set of plots and images that summarize a run's dynamics
+      - Sphere with random sample pose points on it, can:
+        - Visualize loss surface over all inward-facing directions
+        - Visualize camera position trajectory
+      - Grid of active candidate camera positions
+      - Plots of: view-alignment loss, pose-estimation error
+      - Show vector field of how each sample point "votes" or "pushes" guess pose towards target
+    
+    TODO: Optimization
+      - Initialization: Use random sampling around sphere to find a good (set?) of initial poses
+      - Bayesian optimization: https://distill.pub/2020/bayesian-optimization
+      - Population / evolutionary optimization
+      - Computing pixel sampling pdf using svox-rendered guess-view AND/or target view
+      
+    TODO: Curiosities
+      - Which degrees of freedom are hardest for the model to optimize over?
+        - Look at different "slices" of optimization, where some params are fixed
+          - Fix distance: produce loss volume over sphere or SO(3) 
+          - Fix orientation (one free rotation dimension): produce loss volume enclosed by two circles with shared center
+          - Try allowing roll variation
+    """
     def fit(self, target_image):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-2, weight_decay=1e-4)
         # lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
-        for i in range(2000):
+        for i in range(21):
             # Forward pass: Compute predicted y by passing x to the model
-            pred_pixels, pixel_idxs = self.forward()
+            pred_pixels, pixel_idxs = self.forward(target_image=target_image.to(self.device))
             target_pixels = target_image[pixel_idxs[:, 0], pixel_idxs[:, 1]]
 
             loss = ((pred_pixels - target_pixels)**2).sum()
@@ -101,8 +122,9 @@ def vis_pixies(pred_pixels, pixel_idxs, wh=(800, 800), device='cuda'):
     img = img.unsqueeze(0)
     img = img.permute(0, 3, 1, 2)
     img = kornia.box_blur(img * wh[0]//30 * wh[1]//30, (wh[0]//30, wh[1]//30), 'constant', normalized=False)
-    # fig = plt.figure()
-    # plt.imshow(img[0].permute(1, 2, 0).detach().cpu())
+    fig = plt.figure()
+    plt.imshow(img[0].permute(1, 2, 0).detach().cpu())
+    plt.savefig('canny_sampled.png')
     # fig.suptitle("Target image")
     # plt.show()
     return img[0].permute(1, 2, 0).detach().cpu()
@@ -121,9 +143,10 @@ if __name__ == "__main__":
                             ], device=device)
         target_image = model.render(c2w)
 
-    fig = plt.figure()
-    plt.imshow(target_image.cpu())
-    fig.suptitle("Target image")
-    plt.show()
+    # fig = plt.figure()
+    # plt.imshow(target_image.cpu())
+    # fig.suptitle("Target image")
+    # plt.savefig('out.png')
+    # # plt.show()
 
     model.fit(target_image)

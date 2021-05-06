@@ -13,7 +13,7 @@ from render_utils import NeRF_Renderer, SVOX_Renderer
 from transform_utils import twist_to_matrix
 
 class iNeRF(torch.nn.Module):
-    def __init__(self, device="cuda"):
+    def __init__(self, pose_repr="twist", device="cuda"):
         """
         In the constructor we instantiate four parameters and assign them as
         member parameters.
@@ -25,11 +25,16 @@ class iNeRF(torch.nn.Module):
         self.svox_renderer = SVOX_Renderer(self.image_res)
         self.pose_repr = pose_repr
 
-        init_c2w = self.NeRF_renderer.dataset[7]["c2w"]
-        # Use euler angles, yaw and pitch as parameters of 3x3 rotation matrix
-        # Initialize c2w as look-at matrix to object center from random position
-        self.register_parameter(name='camera_rot', param=torch.nn.Parameter(init_c2w[:3, :3]))
-        self.register_parameter(name='camera_pos', param=torch.nn.Parameter(init_c2w[:3, -1]))
+        self.init_c2w = self.NeRF_renderer.dataset[0]["c2w"]
+        self.init_c2w = torch.vstack((self.init_c2w, torch.tensor([0., 0., 0., 1.])))
+        if pose_repr == "matrix":
+            # Use euler angles, yaw and pitch as parameters of 3x3 rotation matrix
+            # Initialize c2w as look-at matrix to object center from random position
+            self.register_parameter(name='camera_rot', param=torch.nn.Parameter(self.init_c2w[:3, :3]))
+            self.register_parameter(name='camera_pos', param=torch.nn.Parameter(self.init_c2w[:3, -1]))
+        elif pose_repr == "twist":
+            self.register_parameter(name='camera_twi', param=torch.nn.Parameter(torch.tensor([0., 0., 0., 0., 0., 1.])))
+            self.register_parameter(name='camera_rot', param=torch.nn.Parameter(torch.zeros(1)))
         self.to(device)
 
         self.vis = [[], []]
@@ -49,16 +54,19 @@ class iNeRF(torch.nn.Module):
         return self.NeRF_renderer.render_rays(rays)[0], pixel_idxs
 
     def render(self, theta=None, image_res=None):
-        c2w = self.c2w if theta is None else theta.to(self.device)
+        c2w = self.c2w() if theta is None else theta.to(self.device)
         image_res = self.image_res if image_res is None else image_res
         return self.svox_renderer.render_image(c2w, image_res)[0]
 
-    @property
     def c2w(self):
-        c2w = torch.zeros((4, 4)).to(self.device)
-        c2w[:3, :3] = self.camera_rot
-        c2w[:3, -1] = self.camera_pos
-        c2w[-1, -1] = 1
+        if self.pose_repr == "matrix":
+            c2w = torch.zeros((4, 4)).to(self.device)
+            c2w[:3, :3] = self.camera_rot
+            c2w[:3, -1] = self.camera_pos
+            c2w[-1, -1] = 1
+        elif self.pose_repr == "twist":
+            c2w = twist_to_matrix(self.camera_twi, self.camera_rot, self.init_c2w.to(self.device))
+
         return c2w
 
     """
@@ -72,16 +80,24 @@ class iNeRF(torch.nn.Module):
     
     TODO: Optimization
       - Initialization: Use random sampling around sphere to find a good (set?) of initial poses
+            - Is there a symmetry from
       - Bayesian optimization: https://distill.pub/2020/bayesian-optimization
       - Population / evolutionary optimization
       - Computing pixel sampling pdf using svox-rendered guess-view AND/or target view
-      
+    
+    TODO Sampling
+      - Actual PDF sampling
+      - Pdf blur vs no blur
+      - Hard negative mining -> seek pixels with differences (favor high magnitude pixels mismatches waay over many matches)
+      - use importance sampling over target image pdf and guess image sample (integrate via averaging [union] or multiplication [intersection])
+    
     TODO: Curiosities
       - Which degrees of freedom are hardest for the model to optimize over?
         - Look at different "slices" of optimization, where some params are fixed
           - Fix distance: produce loss volume over sphere or SO(3) 
           - Fix orientation (one free rotation dimension): produce loss volume enclosed by two circles with shared center
           - Try allowing roll variation
+      - Could this be considered a pose refinement strategy? consider success rates for grid of (init distance X sample rate)
     """
     def fit(self, target_image):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-2, weight_decay=1e-4)

@@ -90,7 +90,7 @@ def sampling_dist(target_image):
     edge_img = cv2.Canny(np_img, 60, 120)
     non_black = np.nonzero(edge_img)
     edge_pixels = np.array((non_black[0], non_black[1])).T
-    return torch.as_tensor(edge_pixels, dtype=torch.long)
+    return torch.as_tensor(edge_pixels, dtype=torch.long).to('cuda')
 
 def sample_pixels_edge_bias(n_pixels, target_image, image_res=(800, 800)):
     pixel_options = sampling_dist(target_image)

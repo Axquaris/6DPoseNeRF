@@ -10,7 +10,7 @@ from nerf_pl.datasets.llff import *
 
 from util import sample_pixels, sample_rays, sample_pixels_edge_bias
 from render_utils import NeRF_Renderer, SVOX_Renderer
-
+from transform_utils import twist_to_matrix
 
 class iNeRF(torch.nn.Module):
     def __init__(self, device="cuda"):
@@ -23,6 +23,7 @@ class iNeRF(torch.nn.Module):
         self.image_res = (400, 400)
         self.NeRF_renderer = NeRF_Renderer(self.image_res)
         self.svox_renderer = SVOX_Renderer(self.image_res)
+        self.pose_repr = pose_repr
 
         init_c2w = self.NeRF_renderer.dataset[7]["c2w"]
         # Use euler angles, yaw and pitch as parameters of 3x3 rotation matrix
@@ -40,8 +41,10 @@ class iNeRF(torch.nn.Module):
         a Tensor of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Tensors.
         """
-        c2w = self.c2w if c2w is None else c2w.to(self.device)
-        pixel_idxs = sample_pixels_edge_bias(num_pixel_samples, target_image, self.image_res).to(self.device)
+        c2w = self.c2w() if c2w is None else c2w.to(self.device)
+        # print(c2w)
+        pixel_idxs = sample_pixels(num_pixel_samples, self.image_res).to(self.device)
+        # pixel_idxs = sample_pixels_edge_bias(num_pixel_samples, target_image, self.image_res).to(self.device)
         rays = sample_rays(pixel_idxs, c2w, self.NeRF_renderer.dataset)
         return self.NeRF_renderer.render_rays(rays)[0], pixel_idxs
 
@@ -83,7 +86,7 @@ class iNeRF(torch.nn.Module):
     def fit(self, target_image):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-2, weight_decay=1e-4)
         # lr_scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
-        for i in range(21):
+        for i in range(200):
             # Forward pass: Compute predicted y by passing x to the model
             pred_pixels, pixel_idxs = self.forward(target_image=target_image.to(self.device))
             target_pixels = target_image[pixel_idxs[:, 0], pixel_idxs[:, 1]]
@@ -95,8 +98,8 @@ class iNeRF(torch.nn.Module):
                 self.vis[0].append((target_image.detach().cpu() + current_img * 2) / 3)
                 self.vis[1].append(vis_pixies(pred_pixels, pixel_idxs, self.image_res))
             if i % 20 == 0:
-                if i == 0:
-                    vis_pixies(target_pixels, pixel_idxs, self.image_res)
+                # if i == 0:
+                #     vis_pixies(target_pixels, pixel_idxs, self.image_res)
                 print(i, loss.item())
 
                 # fig = plt.figure()
@@ -114,7 +117,7 @@ class iNeRF(torch.nn.Module):
         self.vis[1] = torch.stack(self.vis[1], dim=0).permute(0, 3, 1, 2)
         video = ts.show_video(self.vis, display=True)
         video.save("out.gif")
-        print(f'Result: {loss}')
+        print(f'Result: {loss}, xi: {self.camera_twi}, theta: {self.camera_rot}')
 
 def vis_pixies(pred_pixels, pixel_idxs, wh=(800, 800), device='cuda'):
     img = torch.zeros((*wh, 3)).to(device)
@@ -122,9 +125,9 @@ def vis_pixies(pred_pixels, pixel_idxs, wh=(800, 800), device='cuda'):
     img = img.unsqueeze(0)
     img = img.permute(0, 3, 1, 2)
     img = kornia.box_blur(img * wh[0]//30 * wh[1]//30, (wh[0]//30, wh[1]//30), 'constant', normalized=False)
-    fig = plt.figure()
-    plt.imshow(img[0].permute(1, 2, 0).detach().cpu())
-    plt.savefig('canny_sampled.png')
+    # fig = plt.figure()
+    # plt.imshow(img[0].permute(1, 2, 0).detach().cpu())
+    # plt.savefig('canny_sampled.png')
     # fig.suptitle("Target image")
     # plt.show()
     return img[0].permute(1, 2, 0).detach().cpu()
@@ -132,7 +135,7 @@ def vis_pixies(pred_pixels, pixel_idxs, wh=(800, 800), device='cuda'):
 if __name__ == "__main__":
     device = "cuda"
     with torch.no_grad():
-        model = iNeRF()
+        model = iNeRF(pose_repr="twist")
         model.to(device)
 
         # Matrix copied from lego test set image 0
@@ -141,6 +144,11 @@ if __name__ == "__main__":
                             [0.0, 0.6790306568145752, 0.7341098785400391, 2.959291696548462],
                             [0.0, 0.0, 0.0, 1.0],
                             ], device=device)
+        # c2w = torch.tensor([[-0.9999999403953552, 0.0, 0.0, 0.0],
+        #                     [0.0, -0.7341099977493286, 0.6790305972099304, 2.737260103225708],
+        #                     [0.0, 0.6790306568145752, 0.7341098785400391, 2.959291696548462],
+        #                     [0.0, 0.0, 0.0, 1.0],
+        #                     ], device=device)
         target_image = model.render(c2w)
 
     # fig = plt.figure()

@@ -74,14 +74,37 @@ def matrix_to_rotation_6d(matrix: torch.Tensor) -> torch.Tensor:
 def sampling_dist(target_image):
     np_img = np.array(target_image * 255, dtype=np.uint8)
     edge_img = cv2.Canny(np_img, 60, 120)
+    blurred_img = cv2.GaussianBlur(edge_img,(15,15),0)
+    norm_image = cv2.normalize(blurred_img, None, norm_type=cv2.NORM_MINMAX)
+    weights = []
+    for u in range(blurred_img.shape[0]):
+        for v in range((blurred_img.shape[1])):
+            weights.append((u, v, norm_image[u, v, 0]))
+    weights = np.array(weights)
+    weights[:, 2] = np.cumsum(weights[:, 2]/np.linalg.norm(weights[:, 2]))
+    return torch.as_tensor(weights, dtype=torch.float)
+
+@cache
+def sampling_dist(target_image):
+    np_img = np.array(target_image.to('cpu') * 255, dtype=np.uint8)
+    edge_img = cv2.Canny(np_img, 60, 120)
     non_black = np.nonzero(edge_img)
     edge_pixels = np.array((non_black[0], non_black[1])).T
     return torch.as_tensor(edge_pixels, dtype=torch.long)
 
 def sample_pixels_edge_bias(n_pixels, target_image, image_res=(800, 800)):
-    pixel_options = sampling_dist(target_image.cpu())
+    pixel_options = sampling_dist(target_image)
     rand_idxs = torch.randperm(pixel_options.shape[0])[:n_pixels]
     return pixel_options[rand_idxs]
+
+    # pixel_options = sampling_dist(target_image.cpu())
+    # rand_idxs = np.random.choice(len(pixel_options), n_pixels, replace=False, p=pixel_options[:,2]/np.linalg.norm(pixel_options[:,2]))
+    # return pixel_options[:,0:1][rand_idxs]
+
+    # pixel_options = sampling_dist_new(target_image.cpu())
+    # rand_vals = torch.rand(n_pixels)
+    # rand_idx = (pixel_options[:, 2] < rand_vals).nonzero(as_tuple=True)[-1]
+    # return pixel_options[:, 0:1][rand_idxs]
 
 def sample_pixels(n_pixels, image_res=(800, 800)):
     """

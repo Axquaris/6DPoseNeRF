@@ -1,169 +1,212 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<!DOCTYPE HTML>
+<!--
+	Stellar by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+-->
+<html>
+	<head>
+		<title>6D iNeRF</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
 
-  <head>
-    <style>
-      div.padded {
-        padding-top: 0px;
-        padding-right: 100px;
-        padding-bottom: 0.25in;
-        padding-left: 100px;
-      }
+		<!-- Wrapper -->
+			<div id="wrapper">
 
-    </style>
-    <title>6D Pose Estimation with Neural Radiance Fields</title>
+				<!-- Header -->
+					<header id="header" class="alt">
+						<span class="logo"><img src="images/logo.svg" alt="" /></span>
+						<h1>Pose Estimation with Neural Radiance Fields</h1>
+						<p>Domas Buracas, Nir Levin, Gregory Jerian, Matthew Harrigan<br>CS184</p>
+					</header>
 
-    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-    <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
-  </head>
+				<!-- Nav -->
+					<nav id="nav">
+						<ul>
+							<li><a href="#intro" class="active">Abstract</a></li>
+							<li><a href="#second">Technical Approach</a></li>
+							<li><a href="#first">Results</a></li>
+							<li><a href="#cta">References</a></li>
+							<li><a href="#contrib">Individual Contributions</a></li>
+						</ul>
+					</nav>
 
-  <body>
-    <!--TODO: make styling less terrible, see styling ideas:
-https://alexyu.net/plenoctrees/
-https://github.com/Axquaris/6DPoseNeRF/settings/pages/themes?source=main&source_dir=%2Fdocs-->
+				<!-- Main -->
+					<div id="main">
 
-    <br />
-    <div class="padded">
-      <h1 align="middle">6D Pose Estimation with Neural Radiance Fields</h1>
-      <h2 align="middle">Domas Buracas, Matthew Harrigan, Gregory Jerian, Nir Levin</h2>
+						<!-- Introduction -->
+							<section id="intro" class="main">
+								<div class="spotlight">
+									<div class="content">
+										<header class="major">
+											<h2>Abstract</h2>
+										</header>
+										<p>Sed lorem ipsum dolor sit amet nullam consequat feugiat consequat magna
+										adipiscing magna etiam amet veroeros. Lorem ipsum dolor tempus sit cursus.
+										Tempus nisl et nullam lorem ipsum dolor sit amet aliquam.</p>
+										<ul class="actions">
+											<li><a href="generic.html" class="button">Learn More</a></li>
+										</ul>
+									</div>
+									<span class="image"><img src="images/pic01.jpg" alt="" /></span>
+								</div>
+							</section>
 
-      <p>We will be re-implementing the approach to 6D pose estimation introduced in <a href="https://arxiv.org/pdf/2012.05877.pdf">[iNeRF]</a> by optimizing a 6D pose to minimize the difference between pixels rendered at a &ldquo;guess&rdquo; pose and a target image. This effectively inverts <a href="https://arxiv.org/pdf/2003.08934.pdf">[NeRF]</a> to recover the pose where the target image could have been rendered or photographed from. If this goes well, we will investigate extensions which speed up or broaden the set of scenes the method works in.</p>
-      <h2 align="middle">Problem Description</h2>
-      <p>Our baseline problem is that we&rsquo;re given a &ldquo;target image&rdquo; of some object at a certain position and angle, as well as a rendered model of that object. To optimize our image-matching objective, which is a sum over differences between a sampled set of rendered and target image pixels, we will use gradient descent to obtain the optimal position (x, y, z) and pose (yaw, pitch, roll) to get the fully rendered image as close to the target as possible. To do this we will have to solve a series of sub problems:</p>
-      <ol>
-        <li aria-level="1">Render images of an object from novel viewpoints (implemented in NeRF)</li>
-        <ol>
-          <li aria-level="2">Be able to do this fast enough and in a differentiable fashion (svox library)</li>
-        </ol>
-        <li aria-level="1">Sample a set of pixels for image matching objective to be computed over (algo introduced in iNeRF)</li>
-        <li aria-level="1">Optimize matching objective over pose parameters (gradient descent or evolutionary optimizer)</li>
-      </ol>
-      <p>Being able to estimate the required angles needed to get the pose that we want for an object brings with it a myriad of different applications, especially in the field of robotics.</p>
-      <p>Here you should provide the context for your idea. Describe the problem that you are trying to solve, why it is important, where it is challenging. Give us a general idea on how you are going to solve it.</p>
-      <h2 align="middle">Goals and Deliverables</h2>
-      <p>For our project we will be predicting the position and angle of an object given an image of it as input, a 3D NeRF model, and an initial estimate for the pose. To obtain this prediction, we will be partially rendering images by sampling a Neural Radiance Field over individual rays. The images will be mostly scenes centered on a single object, with blank backgrounds, but may include real world-scenes too.</p>
-      <p>If we have time, we hope to embed a visualizer for the algorithm in our final webpage. Something like <a href="https://alexyu.net/plenoctrees/demo/?load=https://storage.googleapis.com/nerf_data/plenoctree/chair.npz">this</a> maybe. Another option would be to have interactive plots / diagrams.</p>
-      <p>We want to measure and compare different pixel sampling methods, which are part of the gradient descent pipeline. After each gradient step, we&rsquo;d sample certain pixels and compare our sampled object to the baseline image in order to determine how far off our predicted pose is from the reference image&rsquo;s camera pose.</p>
-      <p>Our quality / performance metric of our system will be the rotational and translational difference between our predicted object pose and the target image&rsquo;s camera pose.</p>
-      <p>In our analysis, we would like to explore:&nbsp;</p>
-      <ul>
-        <li aria-level="1">How important is the pixel sampling scheme to getting quality gradients?</li>
-        <li aria-level="1">How do different design choices affect the loss surface we optimize over?</li>
-        <ul>
-          <li aria-level="2">Visualize the field of match qualities over all view angles to understand the loss surface (over a sphere).</li>
-        </ul>
-        <li aria-level="1">Is this a practical type of approach for real-time 3D object detection and SLAM for robotics?</li>
-      </ul>
-      <p>In summary, we plan to deliver a working re-implementation of the iNeRF paper which is able to infer object poses from a given image. We think this will be sufficient to earn an A for our work, as it engages with the graphics focus of this class and is sufficiently complex. If this goes well we hope to experiment with improved sampling pixel and ray sampling schemes, more challenging scenes, and any ideas we come up with along the way to see if we can improve the algorithm for robotic applications.</p>
-      <h2 align="middle">Schedule</h2>
-      <p>In this section you should organize and plan the tasks and subtasks that your team will execute. Since presentations are ~4 weeks from the due-date of the proposal, you should include a set of tasks for every week.</p>
-      <table border="1" style="margin-left:auto;margin-right:auto;">
-        <tbody>
-          <tr>
-            <td>Do by</td>
-            <td>Task</td>
-            <td>Who will work on it</td>
-          </tr>
-          <tr>
-            <td>4/14</td>
-            <td>
-              <p>Load a NeRF model and render images real-time with <a href="https://alexyu.net/plenoctrees/">(svox library)</a> <a href="https://www.ocf.berkeley.edu/~sxyu/docs/svox/build/html/svox.html">docs</a></p>
-              <ul>
-                <li aria-level="1">Mostly figuring out library API</li>
-              </ul>
-            </td>
-            <td>Domas and Greg</td>
-          </tr>
-          <tr>
-            <td>4/24</td>
-            <td>
-              <p>Pixel sampling scheme</p>
-              <ul>
-                <li aria-level="1">Baseline is randomly picking pixels</li>
-                <li aria-level="1">Stretch goal: Adaptive pixel-sampling methods<br />(iNeRF Section IV.B)</li>
-                <ul>
-                  <li aria-level="2">Interest Point Sampling</li>
-                  <li aria-level="2">Interest Region Sampling</li>
-                </ul>
-              </ul>
-            </td>
-            <td>Domas and Matthew</td>
-          </tr>
-          <tr>
-            <td>4/24</td>
-            <td>
-              <p>Pose optimization loop</p>
-              <ul>
-                <li aria-level="1">Implement pose parameterization<br />(iNeRF Section IV.A)</li>
-                <li aria-level="1">Compute image matching loss and backprop onto pose prediction</li>
-              </ul>
-            </td>
-            <td>Domas and Nir</td>
-          </tr>
-          <tr>
-            <td>4/26</td>
-            <td>
-              <p>Analyses: making nice plots</p>
-              <ul>
-                <li aria-level="1">graphs visualizing efficiency of different sampling methods</li>
-              </ul>
-            </td>
-            <td>Nir, Matthew and Greg</td>
-          </tr>
-          <tr>
-            <td>4/27</td>
-            <td>
-              <p>Initial Due Date</p>
-              <ul>
-                <li aria-level="1">milestone webpage and video</li>
-                <li aria-level="1">presentation slides</li>
-              </ul>
-            </td>
-            <td>
-              <p>Nir (webpage)</p>
-              <p>Greg (video)</p>
-            </td>
-          </tr>
-          <tr>
-            <td>5/6</td>
-            <td>Presentation</td>
-            <td>Everyone</td>
-          </tr>
-          <tr>
-            <td>5/11</td>
-            <td>
-              <p>Final Due Date</p>
-              <ul>
-                <li aria-level="1">final report webpage and video</li>
-              </ul>
-            </td>
-            <td>Everyone</td>
-          </tr>
-        </tbody>
-      </table>
+						<!-- Second Section -->
+							<section id="second" class="main special">
+								<header class="major">
+									<h2>Technical Approach</h2>
+									<p>Donec imperdiet consequat consequat. Suspendisse feugiat congue<br />
+									posuere. Nulla massa urna, fermentum eget quam aliquet.</p>
+								</header>
+								<ul class="statistics">
+									<li class="style1">
+										<span class="icon solid fa-code-branch"></span>
+										<strong>5,120</strong> Etiam
+									</li>
+									<li class="style2">
+										<span class="icon fa-folder-open"></span>
+										<strong>8,192</strong> Magna
+									</li>
+									<li class="style3">
+										<span class="icon solid fa-signal"></span>
+										<strong>2,048</strong> Tempus
+									</li>
+									<li class="style4">
+										<span class="icon solid fa-laptop"></span>
+										<strong>4,096</strong> Aliquam
+									</li>
+									<li class="style5">
+										<span class="icon fa-gem"></span>
+										<strong>1,024</strong> Nullam
+									</li>
+								</ul>
+								<p class="content">Nam elementum nisl et mi a commodo porttitor. Morbi sit amet nisl eu arcu faucibus hendrerit vel a risus. Nam a orci mi, elementum ac arcu sit amet, fermentum pellentesque et purus. Integer maximus varius lorem, sed convallis diam accumsan sed. Etiam porttitor placerat sapien, sed eleifend a enim pulvinar faucibus semper quis ut arcu. Ut non nisl a mollis est efficitur vestibulum. Integer eget purus nec nulla mattis et accumsan ut magna libero. Morbi auctor iaculis porttitor. Sed ut magna ac risus et hendrerit scelerisque. Praesent eleifend lacus in lectus aliquam porta. Cras eu ornare dui curabitur lacinia.</p>
+								<footer class="major">
+									<ul class="actions special">
+										<li><a href="generic.html" class="button">Learn More</a></li>
+									</ul>
+								</footer>
+							</section>
 
+						<!-- First Section -->
+							<section id="first" class="main special">
+								<header class="major">
+									<h2>Results</h2>
+								</header>
+								<ul class="features">
+									<li>
+										<span class="icon solid major style1 fa-code"></span>
+										<h3>Ipsum consequat</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+									<li>
+										<span class="icon major style3 fa-copy"></span>
+										<h3>Amed sed feugiat</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+									<li>
+										<span class="icon major style5 fa-gem"></span>
+										<h3>Dolor nullam</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+								</ul>
+								<footer class="major">
+									<ul class="actions special">
+										<li><a href="generic.html" class="button">Learn More</a></li>
+									</ul>
+								</footer>
+							</section>
 
+						<!-- Get Started -->
+							<section id="cta" class="main special">
+								<header class="major">
+									<h2>References</h2>
+									<p>Donec imperdiet consequat consequat. Suspendisse feugiat congue<br />
+									posuere. Nulla massa urna, fermentum eget quam aliquet.</p>
+								</header>
+								<footer class="major">
+									<ul class="actions special">
+										<li><a href="generic.html" class="button primary">Get Started</a></li>
+										<li><a href="generic.html" class="button">Learn More</a></li>
+									</ul>
+								</footer>
+							</section>
 
-      <h2 align="middle">Resources</h2>
-      <p>A list of our resources.</p>
-      <a href="https://github.com/yenchenlin/awesome-NeRF">Awesome-NeRF</a>
-      <br>
-      <a href="https://www.ocf.berkeley.edu/~sxyu/docs/svox/build/html/svox.html">svox library</a>
+						<!-- First Section -->
+							<section id="contrib" class="main special">
+								<header class="major">
+									<h2>Individual Contributions</h2>
+								</header>
+								<ul class="features">
+									<li>
+										<span class="icon solid major style1 fa-code"></span>
+										<h3>Ipsum consequat</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+									<li>
+										<span class="icon major style3 fa-copy"></span>
+										<h3>Amed sed feugiat</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+									<li>
+										<span class="icon major style5 fa-gem"></span>
+										<h3>Dolor nullam</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+								</ul>
+								<footer class="major">
+									<ul class="actions special">
+										<li><a href="generic.html" class="button">Learn More</a></li>
+									</ul>
+								</footer>
+							</section>
+					</div>
 
-      <h2 align="middle">References</h2>
-      <p>Paper citations here</p>
-      <a href="https://yenchenlin.me/inerf/">iNeRF: Inverting Neural Radiance Fields for Pose Estimation</a>
-          <br>
-          <a href="https://alexyu.net/plenoctrees/">PlenOctrees</a>
-          <br>
-          <!--        https://github.com/sxyu/volrend-->
-          <a href="https://arxiv.org/abs/2103.10380">FastNeRF</a>
-          <br>
-          <a href="https://phog.github.io/snerg/index.html">Baking Neural Radiance Fields for Real-Time View Synthesis</a>
+				<!-- Footer -->
+					<footer id="footer">
+						<section>
+							<h2>Aliquam sed mauris</h2>
+							<p>Sed lorem ipsum dolor sit amet et nullam consequat feugiat consequat magna adipiscing tempus etiam dolore veroeros. eget dapibus mauris. Cras aliquet, nisl ut viverra sollicitudin, ligula erat egestas velit, vitae tincidunt odio.</p>
+							<ul class="actions">
+								<li><a href="generic.html" class="button">Learn More</a></li>
+							</ul>
+						</section>
+						<section>
+							<h2>Etiam feugiat</h2>
+							<dl class="alt">
+								<dt>Address</dt>
+								<dd>1234 Somewhere Road &bull; Nashville, TN 00000 &bull; USA</dd>
+								<dt>Phone</dt>
+								<dd>(000) 000-0000 x 0000</dd>
+								<dt>Email</dt>
+								<dd><a href="#">information@untitled.tld</a></dd>
+							</dl>
+							<ul class="icons">
+								<li><a href="#" class="icon brands fa-twitter alt"><span class="label">Twitter</span></a></li>
+								<li><a href="#" class="icon brands fa-facebook-f alt"><span class="label">Facebook</span></a></li>
+								<li><a href="#" class="icon brands fa-instagram alt"><span class="label">Instagram</span></a></li>
+								<li><a href="#" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
+								<li><a href="#" class="icon brands fa-dribbble alt"><span class="label">Dribbble</span></a></li>
+							</ul>
+						</section>
+						<p class="copyright">&copy; Untitled. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
+					</footer>
 
+			</div>
 
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
 
-    </div>
-  </body>
-
+	</body>
 </html>

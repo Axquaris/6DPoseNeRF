@@ -1,5 +1,6 @@
 # 6DPoseNeRF
-
+[Initial Proposal](https://axquaris.github.io/6DPoseNeRF/)<br>
+[Milestone Report](https://axquaris.github.io/6DPoseNeRF/milestone)
 ### Notes:
 Timeline:
  - Use NERF and real-time differentiable renderer (code / libraries available) to set up iNeRF reproduction

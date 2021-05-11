@@ -30,8 +30,8 @@ def twist_to_matrix(xi, theta, device="cuda"):
     omega_hat[1, 2], omega_hat[2, 0], omega_hat[0, 1] = -omega
     omega_norm = torch.norm(omega)
 
-    exp_omega = torch.eye(3).to(device) + omega_hat / omega_norm * torch.sin(omega_norm * theta) + \
-        (omega_hat @ omega_hat) / (omega_norm ** 2) * (1 - torch.cos(omega_norm * theta))
+    exp_omega = torch.eye(3).to(device) + omega_hat / omega_norm * torch.sin(omega_norm * theta)
+    exp_omega += (omega_hat @ omega_hat) / (omega_norm ** 2) * (1 - torch.cos(omega_norm * theta))
 
     exp_xi = torch.zeros((4, 4)).to(device)
     exp_xi[:3, :3] = exp_omega

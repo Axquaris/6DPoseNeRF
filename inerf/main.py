@@ -10,7 +10,7 @@ from nerf_pl.datasets.llff import *
 
 from util import sample_pixels, sample_rays, sample_pixels_edge_bias
 from render_utils import NeRF_Renderer, SVOX_Renderer
-from transform_utils import twist_to_matrix
+from transform_utils import twist_to_matrix, yaw_pitch_to_rotation_matrix
 
 class iNeRF(torch.nn.Module):
     def __init__(self, pose_repr="twist", sampling="canny", device="cuda"):
@@ -36,6 +36,19 @@ class iNeRF(torch.nn.Module):
         elif pose_repr == "twist":
             self.register_parameter(name='camera_twi', param=torch.nn.Parameter(torch.tensor([0., 0., 0., 0., 0., 1.])))
             self.register_parameter(name='camera_rot', param=torch.nn.Parameter(torch.zeros(1)))
+        elif pose_repr == "euler":
+            c2w_init = torch.tensor([[1., 0., 0., 0.],
+                                     [0., 1., 0., .3],
+                                     [0., 0., 1., 3.3],
+                                     [0., 0., 0., 1.],
+                                     ], device=self.device)
+            init_correction = torch.eye(4, device=device)
+            init_correction[:3, :3] = yaw_pitch_to_rotation_matrix(torch.Tensor([0]), torch.Tensor([-np.pi / 2]))[0]
+
+            self.init_c2w_ = init_correction @ c2w_init
+            # self.register_parameter(name='camera_pitch', param=torch.nn.Parameter(torch.tensor([1e-5])))
+            # self.register_parameter(name='camera_yaw', param=torch.nn.Parameter(torch.tensor([1e-5])))
+            self.register_parameter(name='camera_dist', param=torch.nn.Parameter(torch.tensor([1e-5])))
         self.to(device)
 
         self.vis = [[], []]

@@ -3788,3 +3788,10 @@ input, select, textarea {
 	border-bottom-color: white;
 	text-decoration: none;
 }
+
+.centeredimg {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	width: 100%;
+  }

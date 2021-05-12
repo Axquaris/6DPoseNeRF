@@ -170,38 +170,53 @@
 									<h2>Results</h2>
 								</header>
 
-								<ul class="features">
-									<li>
-										<img src="images/close_initial_start.gif" align="right" width="400px" />
-										<h3>Ipsum consequat</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-									<li>
-										<img src="images/smooth_no_lr_scaling.gif" align="right" width="400px" />
-										<h3>Amed sed feugiat</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-									<li>
-										<img src="images/sporatic_no_lr_scaling.gif" align="right" width="400px" />
-										<h3>Dolor nullam</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-								</ul>
-
-								<p class="content">
-									Here are some examples of our sampling schemes, random sampling and Canny sampling:
-								</p>
-
 								<p class="content">
 									Here are some examples of our pose optimization loop being optimized on our image
 									with random sampling. Notice that the model has trouble optimizing when our
 									starting pose is very different from the target pose:
 								</p>
+								<ul class="features">
+									<li>
+										<img src="images/rand1.gif" align="right" width="400px" />
+										<h3>Ipsum consequat</h3>
+										<p>Random sampling with the starting pose being very similar to the target pose.</p>
+									</li>
+									<li>
+										<img src="images/rand2.gif" align="right" width="400px" />
+										<h3>Amed sed feugiat</h3>
+										<p>Random sampling with a moderate difference from the target pose.</p>
+									</li>
+									<li>
+										<img src="images/rand3.gif" align="right" width="400px" />
+										<h3>Amed sed feugiat</h3>
+										<p>Random sampling with a moderate difference from the target pose.</p>
+									</li>
+								</ul>
 
 								<p class="content">
 									Here are some examples of our pose optimization loop being optimized on our
 									image with Canny sampling:
 								</p>
+
+								<ul class="features">
+									<li>
+										<img src="images/canny1.gif" align="right" width="400px" />
+										<h3>Ipsum consequat</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+									<li>
+										<img src="images/canny2.gif" align="right" width="400px" />
+										<h3>Amed sed feugiat</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+									<li>
+										<img src="images/canny3.gif" align="right" width="400px" />
+										<h3>Dolor nullam</h3>
+										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
+									</li>
+								</ul>
+
+
 
 								<p class="content">
 									Here are some interesting results. (show results with fewer pixels, or
@@ -224,7 +239,6 @@
 											iNeRF [https://yenchenlin.me/inerf/]
 										</li>
 									</ul>
-									Here are some examples of our sampling schemes, random sampling and Canny sampling:
 								</p>
 
 							</section>
@@ -235,23 +249,24 @@
 									<h2>Individual Contributions</h2>
 								</header>
 								<p class="content">
-								This project was Domas’s brainchild, who researched nerf and inerf and pitched the
-								project to the rest of us. Domas was involved in nearly every aspect of the project and
-								was always around to offer advice. He worked most heavily on pose optimization as well
-								as generating all the results and testing everything, since svox only worked on his
-								machine.
-								<br>
-								Matthew came up with and implemented the various sampling algorithms, including Canny
-								and high-importance sampling, as well experimented with numerous other image
-								pre-processing and sampling techniques. Matthew also worked on the websites.
-								<br>
-								Greg worked on getting NeRF and svox working, ironing out the intricacies of the
-								libraries. He worked on rendering and pixel sampling of the model. He also narrated,
-								edited, and published the videos.
-								<br>
-								Nir worked on the pose optimization loop, including the forward and backward passes
-								and pose parameterizations. Nir and Domas often worked in tandem. Nir put together our
-									websites and translated our google docs to html.</p>
+									This project was Domas’s brainchild, who researched nerf and inerf and pitched the
+									project to the rest of us. Domas was involved in nearly every aspect of the project and
+									was always around to offer advice. He worked most heavily on pose optimization as well
+									as generating all the results and testing everything, since svox only worked on his
+									machine.
+									<br>
+									Matthew came up with and implemented the various sampling algorithms, including Canny
+									and high-importance sampling, as well experimented with numerous other image
+									pre-processing and sampling techniques. Matthew also worked on the websites.
+									<br>
+									Greg worked on getting NeRF and svox working, ironing out the intricacies of the
+									libraries. He worked on rendering and pixel sampling of the model. He also narrated,
+									edited, and published the videos.
+									<br>
+									Nir worked on the pose optimization loop, including the forward and backward passes
+									and pose parameterizations. Nir and Domas often worked in tandem. Nir put together our
+									websites and translated our google docs to html.
+								</p>
 							</section>
 					</div>
 

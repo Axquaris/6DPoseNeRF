@@ -19,7 +19,6 @@
 
 				<!-- Header -->
 					<header id="header" class="alt">
-						<span class="logo"><img src="images/logo.svg" alt="" /></span>
 						<h1>Pose Estimation with Neural Radiance Fields</h1>
 						<p>Domas Buracas, Nir Levin, Gregory Jerian, Matthew Harrigan<br>CS184</p>
 					</header>
@@ -27,6 +26,7 @@
 				<!-- Nav -->
 					<nav id="nav">
 						<ul>
+                            <li><a href="#video">Video</a></li>
 							<li><a href="#intro" class="active">Abstract</a></li>
 							<li><a href="#second">Technical Approach</a></li>
 							<li><a href="#first">Results</a></li>
@@ -39,7 +39,7 @@
 					<div id="main">
 							<section id="video" class="main special">
 								<header class="major">
-									<h2>Final Video</h2>
+									<h2>Video</h2>
 									<iframe width="560" height="315" src="https://www.youtube.com/embed/zq72I35PUNw"
 											title="YouTube video player" frameborder="0" allow="accelerometer; autoplay;
 											clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -156,17 +156,16 @@
 								</p>
 
 								<p class="content">
-									From this project, we learned many important lessons. First, we learned that
-									picking an overly ambitious project can be a lot more work than any of us were
-									expecting. Even though we completed most of what we wished to accomplish, we ended
-									up spending a lot of time on this. On the technical side, we learned that
-									the parameters we use to represent the object we are optimizing are just as
+									From this project, we learned many important lessons. First, we learned a lot about
+                                    working as a team, creating deadlines for ourselves, and following a schedule.
+                                    On the technical side, we learned that the parameters we use to represent the object 
+                                    we are optimizing are just as
 									important as the optimization procedure itself, and we had to eventually change
-									our representation to our twist vector plus thetas one in order optimization
+									our representation as described above to get our optimization
 									loop to properly work. Additionally, we learned that in order to speed up our
-									computationally intensive algorithm, we can
-									be clever about selecting a subset of our data and making the problem much faster
-									while retaining the important data. In this project, this was our sampling scheme,
+									computationally intensive algorithm, we could
+									be clever about selecting a subset of our data. This made the algorithm much faster
+									while still retaining the important data. In this project, this was our sampling scheme,
 									however this is generally a good lesson to apply to advanced algorithms in many
 									fields.
 								</p>

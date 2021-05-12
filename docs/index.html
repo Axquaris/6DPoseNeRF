@@ -37,6 +37,17 @@
 
 				<!-- Main -->
 					<div id="main">
+							<section id="video" class="main special">
+								<header class="major">
+									<h2>Final Video</h2>
+									<iframe width="560" height="315" src="https://www.youtube.com/embed/zq72I35PUNw"
+											title="YouTube video player" frameborder="0" allow="accelerometer; autoplay;
+											clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+											allowfullscreen></iframe>
+								</header>
+								<footer class="major">
+								</footer>
+							</section>
 
 						<!-- Introduction -->
 							<section id="intro" class="main">
@@ -45,12 +56,15 @@
 										<header class="major">
 											<h2>Abstract</h2>
 										</header>
-										<p>Sed lorem ipsum dolor sit amet nullam consequat feugiat consequat magna
-										adipiscing magna etiam amet veroeros. Lorem ipsum dolor tempus sit cursus.
-										Tempus nisl et nullam lorem ipsum dolor sit amet aliquam.</p>
-										<ul class="actions">
-											<li><a href="generic.html" class="button">Learn More</a></li>
-										</ul>
+										<p>We have re-implemented the approach to 6D pose estimation
+											introduced in [iNeRF] by optimizing a 6D pose to minimize
+											the difference between pixels rendered at a “guess” pose
+											and a target image. This effectively inverts [NeRF] to recover
+											the pose where the target image could have been rendered or photographed from.
+											<br><br>
+											In addition, we’ve created many different ways to visualize the process
+											and results, including the random sampling distribution, movies showing
+											the optimization process, and 3D graphs of the loss surfaces.</p>
 									</div>
 									<span class="image"><img src="images/pic01.jpg" alt="" /></span>
 								</div>
@@ -60,140 +74,161 @@
 							<section id="second" class="main special">
 								<header class="major">
 									<h2>Technical Approach</h2>
-									<p>Donec imperdiet consequat consequat. Suspendisse feugiat congue<br />
-									posuere. Nulla massa urna, fermentum eget quam aliquet.</p>
 								</header>
-								<ul class="statistics">
-									<li class="style1">
-										<span class="icon solid fa-code-branch"></span>
-										<strong>5,120</strong> Etiam
-									</li>
-									<li class="style2">
-										<span class="icon fa-folder-open"></span>
-										<strong>8,192</strong> Magna
-									</li>
-									<li class="style3">
-										<span class="icon solid fa-signal"></span>
-										<strong>2,048</strong> Tempus
-									</li>
-									<li class="style4">
-										<span class="icon solid fa-laptop"></span>
-										<strong>4,096</strong> Aliquam
-									</li>
-									<li class="style5">
-										<span class="icon fa-gem"></span>
-										<strong>1,024</strong> Nullam
-									</li>
-								</ul>
-								<p class="content">Nam elementum nisl et mi a commodo porttitor. Morbi sit amet nisl eu arcu faucibus hendrerit vel a risus. Nam a orci mi, elementum ac arcu sit amet, fermentum pellentesque et purus. Integer maximus varius lorem, sed convallis diam accumsan sed. Etiam porttitor placerat sapien, sed eleifend a enim pulvinar faucibus semper quis ut arcu. Ut non nisl a mollis est efficitur vestibulum. Integer eget purus nec nulla mattis et accumsan ut magna libero. Morbi auctor iaculis porttitor. Sed ut magna ac risus et hendrerit scelerisque. Praesent eleifend lacus in lectus aliquam porta. Cras eu ornare dui curabitur lacinia.</p>
-								<footer class="major">
-									<ul class="actions special">
-										<li><a href="generic.html" class="button">Learn More</a></li>
-									</ul>
-								</footer>
+								<p class="content">
+									The first thing we did was load NeRF so we could render images from various viewpoints.
+									Unfortunately, NeRF took 11 seconds on average per render, which was not very fast.
+									To speed up the rendering process, we imported the svox library, which contains an
+									implementation of N3 trees, an octree-like data structure that allowed us to render
+									the images much more quickly. After incorporating svox, our renders sped up to
+									approximately 0 seconds.
+								</p>
+								<p class="content">
+									Next, we wrote our pose optimization loop, as inspired by the iNeRF paper.
+									The purpose of this loop is to optimize our guessed parameters so that they
+									are as equal as possible to those of the target image. To accomplish this,
+									our loop calculates a forward pass on a transformation input and backpropagates
+									on the loss between this calculated image and the target one. Using gradient
+									descent, we are able to adjust the values of our input parameters accordingly
+									to minimize the loss of our target image.
+
+								</p>
+								<p class="content">
+									One of the biggest problems we ran into when implementing the pose optimization
+									loop was that raycasting to every single part of the image was too computationally
+									expensive to do for every single pass. Because of this, we had to implement a
+									pixel sampling scheme to choose specific pixels to sample, calculate the rays
+									from the camera to those pixels on the image plane, and generate an image from
+									these rays. When considering sampling schemes, we tried to choose a scheme that was
+									computationally inexpensive while still representing the image well, so that we
+									would only have a minor decrease in accuracy while maintaining a large speed up.
+
+								</p>
+
+								<p class="content">
+									Some examples of sampling techniques we tried out are random sampling and
+									Canny sampling. Random sampling was consistently outperformed by Canny sampling,
+									which places a greater weight on edges. This is probably due to random sampling
+									often picking parts of the background, which is completely white representative of
+									the pose of the actual image. Because Canny sampling was
+									able to perform better and faster, leading to faster convergence of our
+									parameters, we ended up keeping it for the final product.
+								</p>
+
+								<p class="content">
+									We cycled through several different methods of parameterizing the camera pose in
+									order to determine which method is the most efficient and effective. At first,
+									we started off trying to optimize the 4x4 transformation matrix, but we realized
+									that this representation of a transformation was too general. This is because
+									transformation matrices need to be orthogonal, but the optimization loop doesn't
+									take this factor into account; each element of the matrix is tuned on its own.
+									Thus, we needed a representation of transformations where each parameter could
+									truly be any value within a certain range.
+								</p>
+
+								<p class="content">
+									We decided to constrain this transformation matrix. One thing we experienced with the
+									transformation matrix parameterization is shearing. Since the objects in the
+									dataset are never sheared, only rotated, this is definitely an unnecessary
+									endeavour, so we seeked to remove the possibility of shearing in our pose
+									parameterization. For this, we turned to the parameterization that was used in the
+									iNeRF paper: exponential coordinates consisting of a twist vector and angle.
+									The twist vector representation is 6 dimensional, and stores information about the
+									axis vector the twist is happening about, as well as translation along that vector.
+									The angle specifies the amount of rotation around the axis. This parameterization
+									already does much better than the transformation.
+
+								</p>
+
+								<p class="content">
+									We can constrain this parameterization even further by locking rotations to just
+									different axes (pitch and yaw) instead of a general rotation axis at any angle.
+									This was by far the best performing parameterization, as it works well even with
+									very few samples of the image generated by the forward pass.
+								</p>
+
+								<p class="content">
+									From this project, we learned many important lessons. First, we learned that
+									picking an overly ambitious project can be a lot more work than any of us were
+									expecting. Even though we completed most of what we wished to accomplish, we ended
+									up spending a lot of time on this. On the technical side, we learned that
+									the parameters we use to represent the object we are optimizing are just as
+									important as the optimization procedure itself, and we had to eventually change
+									our representation to our twist vector plus thetas one in order optimization
+									loop to properly work. Additionally, we learned that in order to speed up our
+									computationally intensive algorithm, we can
+									be clever about selecting a subset of our data and making the problem much faster
+									while retaining the important data. In this project, this was our sampling scheme,
+									however this is generally a good lesson to apply to advanced algorithms in many
+									fields.
+								</p>
 							</section>
 
-						<!-- First Section -->
-							<section id="first" class="main special">
+							<!-- Third Section -->
+							<section id="third" class="main special">
 								<header class="major">
 									<h2>Results</h2>
 								</header>
-								<ul class="features">
-									<li>
-										<span class="icon solid major style1 fa-code"></span>
-										<h3>Ipsum consequat</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-									<li>
-										<span class="icon major style3 fa-copy"></span>
-										<h3>Amed sed feugiat</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-									<li>
-										<span class="icon major style5 fa-gem"></span>
-										<h3>Dolor nullam</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-								</ul>
-								<footer class="major">
-									<ul class="actions special">
-										<li><a href="generic.html" class="button">Learn More</a></li>
-									</ul>
-								</footer>
+								<p class="content">
+									Here are some examples of our sampling schemes, random sampling and Canny sampling:
+								</p>
+
+								<p class="content">
+									Here are some examples of our pose optimization loop being optimized on our image
+									with random sampling. Notice that the model has trouble optimizing when our
+									starting pose is very different from the target pose:
+								</p>
+
+								<p class="content">
+									Here are some examples of our pose optimization loop being optimized on our
+									image with Canny sampling:
+								</p>
+
+								<p class="content">
+									Here are some interesting results. (show results with fewer pixels, or
+									1 pixel, or that crazy flipping shit)
+								</p>
+
 							</section>
 
-						<!-- Get Started -->
-							<section id="cta" class="main special">
+						<!-- Fourth Section -->
+							<section id="fourth" class="main special">
 								<header class="major">
 									<h2>References</h2>
-									<p>Donec imperdiet consequat consequat. Suspendisse feugiat congue<br />
-									posuere. Nulla massa urna, fermentum eget quam aliquet.</p>
 								</header>
-								<footer class="major">
-									<ul class="actions special">
-										<li><a href="generic.html" class="button primary">Get Started</a></li>
-										<li><a href="generic.html" class="button">Learn More</a></li>
+								<p class="content">
+									<ul >
+										<li>
+											NeRF [https://www.matthewtancik.com/nerf]
+										</li>
+										<li>
+											iNeRF [https://yenchenlin.me/inerf/]
+										</li>
 									</ul>
-								</footer>
+									Here are some examples of our sampling schemes, random sampling and Canny sampling:
+								</p>
+
 							</section>
 
-						<!-- First Section -->
+						<!-- Fifth Section -->
 							<section id="contrib" class="main special">
 								<header class="major">
 									<h2>Individual Contributions</h2>
 								</header>
-								<ul class="features">
-									<li>
-										<span class="icon solid major style1 fa-code"></span>
-										<h3>Ipsum consequat</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-									<li>
-										<span class="icon major style3 fa-copy"></span>
-										<h3>Amed sed feugiat</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-									<li>
-										<span class="icon major style5 fa-gem"></span>
-										<h3>Dolor nullam</h3>
-										<p>Sed lorem amet ipsum dolor et amet nullam consequat a feugiat consequat tempus veroeros sed consequat.</p>
-									</li>
-								</ul>
-								<footer class="major">
-									<ul class="actions special">
-										<li><a href="generic.html" class="button">Learn More</a></li>
-									</ul>
-								</footer>
+								Domas was the project MVP and worked on all the parts of the project.
+
+								Matthew came up with and implemented the various sampling algorithms,
+								including Canny and high-importance sampling.
+
+								Greg worked on getting NeRF and svox working. He also made the video.
+
+								Nir worked on the pose optimization loop, including the forward and
+								backward passes and pose parameterizations. He also made our websites.
 							</section>
 					</div>
 
 				<!-- Footer -->
 					<footer id="footer">
-						<section>
-							<h2>Aliquam sed mauris</h2>
-							<p>Sed lorem ipsum dolor sit amet et nullam consequat feugiat consequat magna adipiscing tempus etiam dolore veroeros. eget dapibus mauris. Cras aliquet, nisl ut viverra sollicitudin, ligula erat egestas velit, vitae tincidunt odio.</p>
-							<ul class="actions">
-								<li><a href="generic.html" class="button">Learn More</a></li>
-							</ul>
-						</section>
-						<section>
-							<h2>Etiam feugiat</h2>
-							<dl class="alt">
-								<dt>Address</dt>
-								<dd>1234 Somewhere Road &bull; Nashville, TN 00000 &bull; USA</dd>
-								<dt>Phone</dt>
-								<dd>(000) 000-0000 x 0000</dd>
-								<dt>Email</dt>
-								<dd><a href="#">information@untitled.tld</a></dd>
-							</dl>
-							<ul class="icons">
-								<li><a href="#" class="icon brands fa-twitter alt"><span class="label">Twitter</span></a></li>
-								<li><a href="#" class="icon brands fa-facebook-f alt"><span class="label">Facebook</span></a></li>
-								<li><a href="#" class="icon brands fa-instagram alt"><span class="label">Instagram</span></a></li>
-								<li><a href="#" class="icon brands fa-github alt"><span class="label">GitHub</span></a></li>
-								<li><a href="#" class="icon brands fa-dribbble alt"><span class="label">Dribbble</span></a></li>
-							</ul>
-						</section>
 						<p class="copyright">&copy; Untitled. Design: <a href="https://html5up.net">HTML5 UP</a>.</p>
 					</footer>
 

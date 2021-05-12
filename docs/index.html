@@ -57,16 +57,16 @@
 											<h2>Abstract</h2>
 										</header>
 										<p>We have re-implemented the approach to 6D pose estimation
-											introduced in [iNeRF] by optimizing a 6D pose to minimize
+											introduced in <a href=https://yenchenlin.me/inerf>iNeRF</a> by optimizing a 6D pose to minimize
 											the difference between pixels rendered at a “guess” pose
-											and a target image. This effectively inverts [NeRF] to recover
+											and a target image. This effectively inverts <a href=https://www.matthewtancik.com/nerf>NeRF</a> to recover
 											the pose where the target image could have been rendered or photographed from.
 											<br><br>
 											In addition, we’ve created many different ways to visualize the process
 											and results, including the random sampling distribution, movies showing
 											the optimization process, and 3D graphs of the loss surfaces.</p>
 									</div>
-									<span class="image"><img src="images/pic01.jpg" alt="" /></span>
+									<span ><img src="images/parameterization.gif" alt="" /></span>
 								</div>
 							</section>
 
@@ -86,7 +86,7 @@
 								<p class="content">
 									Next, we wrote our pose optimization loop, as inspired by the iNeRF paper.
 									The purpose of this loop is to optimize our guessed parameters so that they
-									are as equal as possible to those of the target image. To accomplish this,
+									are as close as possible to those of the target image. To accomplish this,
 									our loop calculates a forward pass on a transformation input and backpropagates
 									on the loss between this calculated image and the target one. Using gradient
 									descent, we are able to adjust the values of our input parameters accordingly
@@ -109,11 +109,22 @@
 									Some examples of sampling techniques we tried out are random sampling and
 									Canny sampling. Random sampling was consistently outperformed by Canny sampling,
 									which places a greater weight on edges. This is probably due to random sampling
-									often picking parts of the background, which is completely white representative of
+									often picking parts of the background, which is completely white and not representative of
 									the pose of the actual image. Because Canny sampling was
 									able to perform better and faster, leading to faster convergence of our
 									parameters, we ended up keeping it for the final product.
 								</p>
+
+								<ul class="features">
+									<li>
+										<img src="images/random_sampling.png" align="left" width="400px" />
+										<p>Random sampling.</p>
+									</li>
+									<li>
+										<img src="images/canny_sampling.png" align="left" width="400px" />
+										<p>Canny sampling.</p>
+									</li>
+								</ul>
 
 								<p class="content">
 									We cycled through several different methods of parameterizing the camera pose in
@@ -129,15 +140,12 @@
 								<p class="content">
 									We decided to constrain this transformation matrix. One thing we experienced with the
 									transformation matrix parameterization is shearing. Since the objects in the
-									dataset are never sheared, only rotated, this is definitely an unnecessary
-									endeavour, so we seeked to remove the possibility of shearing in our pose
+									dataset are never sheared, only rotated, we wanted to remove the possibility of shearing in our pose
 									parameterization. For this, we turned to the parameterization that was used in the
 									iNeRF paper: exponential coordinates consisting of a twist vector and angle.
-									The twist vector representation is 6 dimensional, and stores information about the
-									axis vector the twist is happening about, as well as translation along that vector.
-									The angle specifies the amount of rotation around the axis. This parameterization
-									already does much better than the transformation.
-
+									The twist vector representation is 6-dimensional, storing information about the
+									axis vector the twist is happening about as well as translation along that vector.
+									The angle specifies the amount of rotation around the axis.
 								</p>
 
 								<p class="content">
@@ -169,6 +177,7 @@
 								<header class="major">
 									<h2>Results</h2>
 								</header>
+
 
 								<p class="content">
 									Here are some examples of our pose optimization loop being optimized on our image
@@ -213,6 +222,9 @@
 
 
 								<p class="content">
+									DOMAS ADD IMAGES
+									DOMAS ADD IMAGES
+									DOMAS ADD IMAGES
 									Here are some interesting results. (show results with fewer pixels, or
 									1 pixel, or that crazy flipping shit)
 								</p>
@@ -220,48 +232,64 @@
 							</section>
 
 						<!-- Fourth Section -->
-							<section id="cta" class="main special">
-								<header class="major">
-									<h2>References</h2>
-								</header>
-								<p class="content">
-									<ul >
-										<li>
-											NeRF [https://www.matthewtancik.com/nerf]
-										</li>
-										<li>
-											iNeRF [https://yenchenlin.me/inerf/]
-										</li>
-									</ul>
-								</p>
+						<section id="cta" class="main special">
+							<header class="major">
+								<h2>References</h2>
+							</header>
+              <ul class="features">
+                <div class="underlineless">
+                  <a href=https://www.matthewtancik.com/nerf>
+                    <span class="icon major style3 fa-copy"></span>
+                    <br>
+                    Original NeRF paper
+                  </a>
+                </div>
+                <div class="underlineless">
+                  <a href=https://svox.readthedocs.io/en/latest>
+                    <span class="icon solid major style1 fa-code"></span>
+                    <br>
+                    svox library
+                  </a>
+                </div>
+                <div class="underlineless">
+                  <a href=https://yenchenlin.me/inerf>
+                    <span class="icon major style3 fa-copy"></span>
+                    <br>
+                    Original iNeRF paper
+                  </a>
+                </div>
+              </ul>
 
-							</section>
+						</section>
 
 						<!-- Fifth Section -->
-							<section id="contrib" class="main special">
-								<header class="major">
-									<h2>Individual Contributions</h2>
-								</header>
-								<p class="content">
-									This project was Domas’s brainchild, who researched nerf and inerf and pitched the
-									project to the rest of us. Domas was involved in nearly every aspect of the project and
-									was always around to offer advice. He worked most heavily on pose optimization as well
-									as generating all the results and testing everything, since svox only worked on his
-									machine.
-									<br>
-									Matthew came up with and implemented the various sampling algorithms, including Canny
-									and high-importance sampling, as well experimented with numerous other image
-									pre-processing and sampling techniques. Matthew also worked on the websites.
-									<br>
-									Greg worked on getting NeRF and svox working, ironing out the intricacies of the
-									libraries. He worked on rendering and pixel sampling of the model. He also narrated,
-									edited, and published the videos.
-									<br>
-									Nir worked on the pose optimization loop, including the forward and backward passes
-									and pose parameterizations. Nir and Domas often worked in tandem. Nir put together our
-									websites and translated our google docs to html.
-								</p>
-							</section>
+						<section id="contrib" class="main special">
+							<header class="major">
+								<h2>Individual Contributions</h2>
+							</header>
+							<p class="content">
+								This project was Domas’s brainchild, who researched NeRF and iNeRF and pitched the
+								project to the rest of us. Domas was involved in nearly every aspect of the project and
+								was always around to offer advice. He worked most heavily on pose optimization as well
+								as generating all the results and testing everything, since svox only worked on his
+								machine.
+							</p>
+							<p class="content">
+								Matthew came up with and implemented the various sampling algorithms, including Canny
+								and high-importance sampling, as well as experimenting with numerous other image
+								pre-processing and sampling techniques. Matthew also worked on the websites.
+							</p>
+							<p class="content">
+								Greg worked on getting NeRF and svox working, ironing out the intricacies of the
+								libraries, as well as rendering and pixel sampling of the model. He also narrated,
+								edited, and published the videos and worked on the websites.
+							</p>
+							<p class="content">
+								Nir worked on the pose optimization loop, including the forward and backward passes
+								and pose parameterizations. Nir and Domas often worked in tandem. Nir put together our
+								websites and translated our Google Docs to HTML.
+							</p>
+						</section>
 					</div>
 
 				<!-- Footer -->

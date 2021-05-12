@@ -3783,3 +3783,8 @@ input, select, textarea {
 			}
 
 		}
+
+.underlineless a {
+	border-bottom-color: white;
+	text-decoration: none;
+}

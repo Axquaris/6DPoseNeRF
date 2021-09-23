@@ -2,7 +2,7 @@
 [Project Webpage](https://axquaris.github.io/6DPoseNeRF/)
 
 
-### Notes:
+<!-- ### Notes:
 Timeline:
  - Use NERF and real-time differentiable renderer (code / libraries available) to set up iNeRF reproduction
 
@@ -25,3 +25,4 @@ Areas of work:
 Applications:
  - SLAM: localization in 3d environments
  - 6D Pose estimation: predict camera pose viewing a single object
+ -->
